@@ -1,0 +1,50 @@
+- name: Setup Nodes Networking
+  hosts: all
+  vars_files:
+    - vars.yaml
+  tasks:
+    - name: Install needed network manager libs
+      ansible.builtin.package:
+        name:
+          - NetworkManager-libnm
+          - python3-libsemanage
+          - python3-policycoreutils
+        state: present
+
+    - name: Configure Local IP address
+      community.general.nmcli:
+        conn_name: "{{ local_eth_name }}"
+        ifname: "{{ local_eth_name }}"
+        type: ethernet
+        ip4: "{{ local_ip }}/24"
+        state: present
+
+    - name: Assign inventory name to unconfigured hostnames
+      hostname:
+        name: "{{ inventory_hostname }}"
+      when:
+        - override_nodes_hostname
+
+    - name: Add IP address of all hosts to all hosts
+      lineinfile:
+        dest: /etc/hosts
+        regexp: '.*{{ item }}$'
+        line: "{{ hostvars[item].local_ip }} {{item}}"
+        state: present
+      when: hostvars[item].local_ip is defined
+      with_items: "{{ groups.all }}"
+
+    - name: Disabling Firewalld
+      service:
+        name: firewalld
+        state: stopped
+        enabled: false
+
+    - name: Iptables Permit any from Local
+      iptables:
+        chain: INPUT
+        in_interface: "{{ item }}"
+        jump: ACCEPT
+      loop:
+        - "lo"
+        - "{{ local_eth_name }}"

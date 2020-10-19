@@ -1,0 +1,22 @@
+- name: Pre-flight checklist before starting
+  hosts: all
+  tasks:
+    - name: Check if distribution is supported
+      fail: 
+        msg: Your distribution is actually unsupported
+      when:
+        - ansible_distribution != 'CentOS'
+        - ansible_distribution_major_version < '8'
+      
+    - name: define traditional ethernet facts
+      set_fact:
+        ansible_eth: "{% set ansible_eth = ansible_eth|default([]) + [hostvars[inventory_hostname]['ansible_' + item]] %}{{ ansible_eth|list }}"
+      when: hostvars[inventory_hostname]['ansible_' + item]['type'] == 'ether'
+      with_items:
+        - "{{ ansible_interfaces }}"
+
+    - name: Check if traditional ethernets are two or more
+      fail: 
+        msg: Your servers should have at least two ethernets
+      when:
+        - ansible_eth | count < 2

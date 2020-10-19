@@ -1,0 +1,4 @@
+gluster_packeges:
+  - centos-release-gluster
+  # - glusterfs-server
+

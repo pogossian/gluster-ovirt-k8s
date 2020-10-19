@@ -1,0 +1,4 @@
+override_nodes_hostname: true
+gluster_volume_name: /dev/mapper/vg0-vol_gluster
+gluster_mouth_path: /bricks/brick1
+gluster_create_fs_force: false       ## If true, allows to create new filesystem on devices that already has filesystem.

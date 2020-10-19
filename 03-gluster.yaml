@@ -1,0 +1,63 @@
+- name: Setup Gluster
+  hosts: gluster
+  vars_files:
+    - vars.yaml
+  tasks:
+    - name: Create a xfs filesystem for gluster
+      community.general.filesystem:
+        fstype: xfs
+        dev: "{{ gluster_volume_name }}"
+        opts: -i size=512
+        force: "{{ gluster_create_fs_force }}"
+
+    - name: Mount up device
+      mount:
+        path: "{{ gluster_mouth_path }}"
+        src: "{{ gluster_volume_name }}"
+        fstype: xfs
+        state: mounted
+
+    - name: Install required packages
+      yum:
+        name: "{{ gluster_packeges }}"
+        state: latest
+
+    - name: Install required packages
+      yum:
+        name: glusterfs-server
+        state: latest
+
+    - name: Gluster services are enabled
+      service:
+        name: glusterd
+        state: started
+        enabled: true
+  
+    - name: Prepare peers list
+      set_fact:
+        peers_list: "{{ groups.gluster|difference([inventory_hostname]) }}"
+
+    - name: Create a trusted storage pool
+      gluster.gluster.gluster_peer:
+        state: present
+        nodes: "{{ peers_list }}"
+
+    - name: Create gv directory
+      file:
+        path: "{{ gluster_mouth_path }}/gv0"
+        state: directory
+  
+
+- name: Setup Gluster gv0 volume from node1
+  hosts: node1
+  vars_files:
+    - vars.yaml
+  tasks:
+    - name: Volume create
+      gluster.gluster.gluster_volume:
+        state: present
+        name: gv0
+        bricks: "{{ gluster_mouth_path }}/gv0"
+        replicas: "{{ groups.gluster | length }}"
+        cluster: "{{ groups.gluster }}"
+      run_once: true

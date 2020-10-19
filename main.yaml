@@ -1,0 +1,3 @@
+- import_playbook: 01-check-compatibility.yaml
+- import_playbook: 02-network.yaml
+- import_playbook: 03-gluster.yaml

@@ -1,0 +1,22 @@
+all:
+  hosts:
+    node1:
+      ansible_host: 185.175.44.41
+      local_ip: 10.0.99.1
+      # local_eth_name: eno3
+    node2:
+      ansible_host: 185.175.44.42
+      local_ip: 10.0.99.2
+  vars:
+    ansible_ssh_user: root
+    ansible_ssh_private_key_file: ~/.ssh/id_rsa
+    local_eth_name: eno2
+  children:
+    gluster:
+      hosts:
+        node1:
+        node2:
+    ovirt:
+      hosts:
+        node1:
+        node2:
